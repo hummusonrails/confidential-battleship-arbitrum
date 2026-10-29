@@ -17,6 +17,14 @@
   <a href="https://hummusonrails.github.io/confidential-battleship-arbitrum/">Play it</a> · <a href="#quick-start">Quick Start</a> · <a href="#building-with-agent-harnesses">Building with Agent Harnesses</a> · <a href="https://github.com/hummusonrails/confidential-battleship-arbitrum/issues">Report a Bug</a>
 </p>
 
+## Arbitrum Speed, Live
+
+<p align="center">
+  <a href=".github/race-the-chains.mp4"><img src=".github/race-the-chains.gif" alt="Race the Chains: the same encrypted shots on Arbitrum Sepolia and Ethereum Sepolia side by side" width="100%"></a>
+</p>
+
+Every cell is fired on both chains at once, and every shot is a transaction, a CoFHE decryption and a second transaction. Real time, no speed-up: **Arbitrum Sepolia sank the whole fleet in 93.8 seconds (31 shots), while Ethereum Sepolia got through 3.** [Watch the full race](.github/race-the-chains.mp4), or [race it yourself](https://hummusonrails.github.io/confidential-battleship-arbitrum/#/race).
+
 ## What It Does
 
 - **Hides the fleet from everyone.** `FHE.randomEuint8` places four ships onchain and they stay encrypted. Nobody can read them: not the player, not the deployer, not the contract.
