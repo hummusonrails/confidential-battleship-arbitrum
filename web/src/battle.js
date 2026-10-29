@@ -115,7 +115,10 @@ export function useBattle(networkKey) {
         });
         if (shot.won) {
           recordGame(networkKey, stateRef.current.shots);
+          // Cells picked after the winning shot are never fired; clear their queued marks.
+          const dropped = new Set(queue.current);
           queue.current = [];
+          update((prev) => ({ cells: prev.cells.map((s, i) => (dropped.has(i) ? null : s)) }));
         }
         refreshBalance();
       } catch (error) {
