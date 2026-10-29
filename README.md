@@ -7,7 +7,7 @@ The action is one Battleship shot: a 64-cell board stored encrypted onchain, a s
 computed under FHE, then decrypted and published onchain with its signature. Every reveal is checked against the
 board the script made, so a run only passes if CoFHE answered correctly.
 
-## Results (29 October 2026, from Israel)
+## Results (October 29, 2026, from Israel)
 
 | Stage (median) | Arbitrum Sepolia | Ethereum Sepolia |
 | --- | --- | --- |
