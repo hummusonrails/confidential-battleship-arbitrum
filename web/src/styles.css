@@ -121,13 +121,26 @@ a { color: inherit; }
   font: 600 14px var(--font-sans); cursor: pointer; white-space: nowrap;
 }
 .wallet-pill:hover { background: var(--hover-fill); }
+.wallet-pill { gap: 12px; font-variant-numeric: tabular-nums; }
+.wallet-pill__net { display: inline-flex; align-items: center; gap: 5px; }
+.wallet-pill__name { font-weight: 600; color: var(--text-secondary); }
+.wallet-pill__net.current .wallet-pill__name { color: var(--text); }
 .wallet-pill__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cell-sunk); }
 .wallet-pill__dot.empty { background: var(--cell-hit); }
 @media (max-width: 640px) {
   .toolbar__title { font-size: 22px; }
-  .toolbar__sub, .wallet-pill__label { display: none; }
+  .toolbar__sub { display: none; }
+  .wallet-pill { gap: 8px; font-size: 12px; }
+  .wallet-pill__dot { display: none; }
   .icon-btn { padding: 0 8px; }
   .wallet-pill { padding: 0 12px; }
+}
+@media (max-width: 480px) {
+  .toolbar { padding-left: 12px; }
+  .toolbar__brand > span { display: none; }
+  .icon-btn { padding: 0 6px; }
+  .wallet-pill { margin-left: 6px; padding: 0 12px; flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px; font-size: 11px; line-height: 1.15; }
+  .wallet-pill__net { gap: 4px; }
 }
 
 /* ---------- buttons ---------- */
@@ -387,6 +400,12 @@ a { color: inherit; }
 .switch[aria-checked="true"] .switch__knob { transform: translateX(12px); }
 
 /* wallet */
+.wallet-export { padding: 14px 0 0; }
+.wallet-export .btn { min-width: 0; height: 36px; font-size: 14px; padding: 0 14px; }
+.wallet-export .footnote { margin: 8px 0 0; }
+.address--secret { background: var(--bg-subdued); border: 1px dashed var(--cell-hit); }
+.race-col__bal { font-weight: 500; }
+.race-col__bal.low { color: #a90111; font-weight: 700; }
 .wallet-net { padding: 14px 0; border-bottom: 1px solid var(--tone-4); }
 .wallet-net__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .wallet-net__name { font: 700 16px var(--font-sans); }

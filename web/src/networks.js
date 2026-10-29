@@ -4,6 +4,7 @@ import { chains as cofheChains } from '@cofhe/sdk/chains';
 export const NETWORKS = {
   'arbitrum-sepolia': {
     label: 'Arbitrum Sepolia',
+    short: 'Arbitrum',
     chain: arbitrumSepolia,
     cofhe: cofheChains.arbSepolia,
     rpc: 'https://sepolia-rollup.arbitrum.io/rpc',
@@ -13,6 +14,7 @@ export const NETWORKS = {
   },
   'ethereum-sepolia': {
     label: 'Ethereum Sepolia',
+    short: 'Ethereum',
     chain: sepolia,
     cofhe: cofheChains.sepolia,
     rpc: 'https://ethereum-sepolia-rpc.publicnode.com',

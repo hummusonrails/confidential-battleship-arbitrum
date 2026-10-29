@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { cellName, sectorOf, SHIP_LENGTHS, TOP_UP, topUp } from './game.js';
+import { burnerKey, cellName, sectorOf, SHIP_LENGTHS, TOP_UP, topUp } from './game.js';
 import { NETWORKS } from './networks.js';
 import { sunkSectors } from './battle.js';
 import { BUCKETS, bucketOf, loadStats, median } from './stats.js';
@@ -381,6 +381,10 @@ export function SettingsModal({ settings, setSettings, onClose }) {
 
 export function WalletModal({ address, balances, onClose, onFunded }) {
   const [busy, setBusy] = useState(null);
+  const [showKey, setShowKey] = useState(false);
+  const copyKey = async () => {
+    try { await navigator.clipboard.writeText(burnerKey()); toast('Private key copied', { duration: 2000 }); } catch {}
+  };
   const copy = async () => {
     try { await navigator.clipboard.writeText(address); toast('Address copied', { duration: 2000 }); } catch {}
   };
@@ -415,6 +419,24 @@ export function WalletModal({ address, balances, onClose, onFunded }) {
           </div>
         </div>
       ))}
+      <div className="wallet-export">
+        <div className="wallet-net__row">
+          <span className="wallet-net__name">Export key</span>
+          <button className="btn btn--secondary" type="button" onClick={() => setShowKey(!showKey)} aria-expanded={showKey}>
+            {showKey ? 'Hide' : 'Show private key'}
+          </button>
+        </div>
+        <p className="footnote">
+          Import this key into any wallet to move leftover testnet ETH out of the burner. It lives only in this browser:
+          clearing site data deletes it.
+        </p>
+        {showKey && (
+          <div className="address address--secret">
+            <span style={{ flex: 1 }}>{burnerKey()}</span>
+            <button type="button" aria-label="Copy private key" onClick={copyKey}><CopyIcon /></button>
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }

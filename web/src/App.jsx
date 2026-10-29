@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { engine } from './battle.js';
 import { HelpModal, InfoModal, SettingsModal, StatsModal, WalletModal } from './components.jsx';
-import { burnerKey } from './game.js';
+import { burnerKey, LOW_BALANCE } from './game.js';
 import { GitHubIcon, HelpIcon, InfoIcon, SettingsIcon, SmallBoardIcon, StatsIcon } from './icons.jsx';
 import { NETWORKS } from './networks.js';
 import { Hub, PlayPage, RacePage } from './pages.jsx';
@@ -54,11 +54,19 @@ export default function App() {
     Object.keys(NETWORKS).forEach((key) => engine(key).balance().then((b) => registerBalance(key, Number(b))).catch(() => {}));
   }, [registerBalance]);
   useEffect(() => { if (modal?.type === 'wallet') refreshBalances(); }, [modal, refreshBalances]);
+  // Both balances stay current on every page; game pages also report theirs after each shot.
+  useEffect(() => {
+    refreshBalances();
+    const timer = setInterval(refreshBalances, 30_000);
+    return () => clearInterval(timer);
+  }, [refreshBalances]);
 
   const open = (type, extra = {}) => setModal({ type, ...extra });
   const close = () => setModal(null);
   const onStats = useCallback((key, onPlayAgain) => setModal({ type: 'stats', networkKey: key, onPlayAgain }), []);
-  const pillBalance = networkKey ? balances[networkKey] : undefined;
+  const walletLabel = Object.entries(NETWORKS)
+    .map(([key, net]) => `${net.label} ${balances[key] === undefined ? 'loading' : `${balances[key].toFixed(4)} ETH`}`)
+    .join(', ');
 
   return (
     <div className="app">
@@ -74,9 +82,14 @@ export default function App() {
         <button className="icon-btn" type="button" aria-label="Help" onClick={() => open('help')}><HelpIcon /></button>
         <button className="icon-btn" type="button" aria-label="Statistics" onClick={() => open('stats', { networkKey: statsNetwork })}><StatsIcon /></button>
         <button className="icon-btn" type="button" aria-label="Settings" onClick={() => open('settings')}><SettingsIcon /></button>
-        <button className="wallet-pill" type="button" onClick={() => open('wallet')} aria-label="Wallet">
-          <span className={`wallet-pill__dot${pillBalance !== undefined && pillBalance < 0.0005 ? ' empty' : ''}`} />
-          <span className="wallet-pill__label">{pillBalance !== undefined ? `${pillBalance.toFixed(4)} ETH` : `${address.slice(0, 6)}…${address.slice(-4)}`}</span>
+        <button className="wallet-pill" type="button" onClick={() => open('wallet')} aria-label={`Wallet: ${walletLabel}`}>
+          {Object.entries(NETWORKS).map(([key, net]) => (
+            <span key={key} className={`wallet-pill__net${key === networkKey ? ' current' : ''}`}>
+              <span className={`wallet-pill__dot${balances[key] !== undefined && balances[key] < LOW_BALANCE ? ' empty' : ''}`} />
+              <span className="wallet-pill__name">{net.short}</span>
+              <span className="wallet-pill__bal">{balances[key] === undefined ? '…' : `${balances[key].toFixed(4)} ETH`}</span>
+            </span>
+          ))}
         </button>
       </header>
 

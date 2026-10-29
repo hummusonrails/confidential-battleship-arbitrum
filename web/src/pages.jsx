@@ -4,12 +4,11 @@ import { Board, Fleet, Stopwatch, secs } from './components.jsx';
 import { BoardIcon, Diamond, Dumbbell, Pill, Ring, Sparkle } from './icons.jsx';
 import { NETWORKS } from './networks.js';
 import { toast } from './toast.jsx';
+import { LOW_BALANCE } from './game.js';
 
 export const COVERS = { 'arbitrum-sepolia': 'var(--game-arbitrum)', 'ethereum-sepolia': 'var(--game-ethereum)' };
 const short = (address) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 const today = () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-// Enough testnet ETH for a game start and a few shots on either chain.
-const MIN_BALANCE = 0.0005;
 
 // ---------- hub ----------
 
@@ -113,7 +112,7 @@ export function PlayPage({ networkKey, onHelp, onWallet, onStats, registerBalanc
   }, [battle.phase, battle.shots, networkKey, onStats, battle]);
 
   const play = async (fresh = false) => {
-    if (battle.balance !== null && battle.balance < MIN_BALANCE) {
+    if (battle.balance !== null && battle.balance < LOW_BALANCE) {
       toast('Fund the burner to play');
       onWallet();
       return;
@@ -190,7 +189,10 @@ function RaceColumn({ battle, startedAt }) {
         <span className="race-col__name">{battle.net.label}</span>
         <span className="race-col__stat">
           {battle.shots} shots{battle.queued ? ` · ${battle.queued} queued` : ''}<br />
-          {done ? `sunk in ${secs(elapsed)}` : startedAt ? (busy ? `${secs(elapsed)} and counting` : `all in by ${secs(elapsed)}`) : battle.phase === 'starting' ? 'placing fleet…' : 'ready'}
+          {done ? `sunk in ${secs(elapsed)}` : startedAt ? (busy ? `${secs(elapsed)} and counting` : `all in by ${secs(elapsed)}`) : battle.phase === 'starting' ? 'placing fleet…' : 'ready'}<br />
+          <span className={`race-col__bal${battle.balance !== null && battle.balance < LOW_BALANCE ? ' low' : ''}`}>
+            {battle.balance === null ? '… ETH' : `${battle.balance.toFixed(4)} ETH`}
+          </span>
         </span>
       </div>
       <Fleet cells={battle.cells} />
@@ -214,7 +216,7 @@ export function RacePage({ onWallet, registerBalance }) {
   const racing = arb.phase === 'playing' || eth.phase === 'playing' || arb.phase === 'won' || eth.phase === 'won';
 
   const start = async () => {
-    if (battles.some((b) => b.balance !== null && b.balance < MIN_BALANCE)) {
+    if (battles.some((b) => b.balance !== null && b.balance < LOW_BALANCE)) {
       toast('Fund the burner on both chains to race');
       onWallet();
       return;

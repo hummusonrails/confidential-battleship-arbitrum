@@ -16,6 +16,8 @@ export const SHIP_LENGTHS = [4, 3, 3, 2];
 export const sectorOf = (cell) => Math.floor(cell / 32) * 2 + Math.floor((cell % 8) / 4);
 export const cellName = (cell) => `${'ABCDEFGH'[cell % 8]}${Math.floor(cell / 8) + 1}`;
 export const TOP_UP = '0.005';
+// Below this the burner may not cover a game start and a few shots, so the UI asks for a top up.
+export const LOW_BALANCE = 0.0005;
 
 // The board as the contract records it: null for untouched cells, else MISS, HIT or SUNK.
 export function boardFromMasks({ shotMask, hitMask, sunkMask }) {
