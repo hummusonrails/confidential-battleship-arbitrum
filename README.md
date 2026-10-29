@@ -23,7 +23,7 @@
   <a href=".github/race-the-chains.mp4"><img src=".github/race-the-chains.gif" alt="Race the Chains: the same encrypted shots on Arbitrum Sepolia and Ethereum Sepolia side by side" width="100%"></a>
 </p>
 
-Every cell is fired on both chains at once, and every shot is a transaction, a CoFHE decryption and a second transaction. Real time, no speed-up: **Arbitrum Sepolia sank the whole fleet in 93.8 seconds (31 shots), while Ethereum Sepolia got through 3.** [Watch the full race](.github/race-the-chains.mp4), or [race it yourself](https://hummusonrails.github.io/confidential-battleship-arbitrum/#/race).
+Every cell is fired on both chains at once, and every shot is a transaction, a CoFHE decryption and a second transaction. Real time, no speed-up: **Arbitrum Sepolia sank the whole fleet in 93.8 seconds (31 shots), while Ethereum Sepolia got through 3.** Watch the [60-second cut](.github/race-the-chains-60s.mp4) or the [full race in real time](.github/race-the-chains.mp4), or [race it yourself](https://hummusonrails.github.io/confidential-battleship-arbitrum/#/race).
 
 ## What It Does
 
