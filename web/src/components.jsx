@@ -134,11 +134,14 @@ export function Fleet({ cells }) {
 const STAGE_LABEL = { fire: 'Firing onchain', decrypt: 'CoFHE decrypting', reveal: 'Publishing result', done: 'Done' };
 
 export function Stopwatch({ active, last, idleLabel = 'Pick a cell to fire' }) {
-  const [now, setNow] = useState(performance.now());
+  // The animation frame only triggers re-renders; time is read at render, so a shot that just started never shows a
+  // stale clock.
+  const [, setTick] = useState(0);
+  const now = performance.now();
   useEffect(() => {
     if (!active) return;
     let frame;
-    const tick = () => { setNow(performance.now()); frame = requestAnimationFrame(tick); };
+    const tick = () => { setTick((n) => n + 1); frame = requestAnimationFrame(tick); };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [active]);
@@ -147,7 +150,7 @@ export function Stopwatch({ active, last, idleLabel = 'Pick a cell to fire' }) {
   let parts;
   let label = idleLabel;
   if (active) {
-    elapsed = now - active.startedAt;
+    elapsed = Math.max(0, now - active.startedAt);
     const m = active.marks;
     const end = elapsed;
     parts = {
