@@ -1,0 +1,11 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["node_modules"]
+solc_version = "0.8.25"
+evm_version = "cancun"
+optimizer = true
+remappings = [
+  "@fhenixprotocol/cofhe-contracts/=node_modules/@fhenixprotocol/cofhe-contracts/",
+  "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+]

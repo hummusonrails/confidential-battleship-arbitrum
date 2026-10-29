@@ -1,0 +1,79 @@
+{
+  "network": "ethereum-sepolia",
+  "receipts": "eth_sendRawTransactionSync",
+  "contract": "0xf0c8d454f46854c900a52862b3db7aea3756da7d",
+  "account": "0xBbB721572062a2Bbf3ba4e27ae7b7a029F8F40fC",
+  "rpc": "https://ethereum-sepolia-rpc.publicnode.com",
+  "rpcRoundTripMs": [
+    106.41791599999999,
+    149.705334,
+    105.08600000000001,
+    96.90866699999992,
+    106.54354199999989
+  ],
+  "baselineMs": [
+    6517.681666999999,
+    11379.840791999999,
+    12305.413458000003
+  ],
+  "deployMs": 24397.525374999997,
+  "encryptMs": 5329.162125000003,
+  "setBoardMs": 5231.277542000003,
+  "stoppedEarly": "",
+  "shots": [
+    {
+      "cell": 0,
+      "hit": false,
+      "fireMs": 11439.892166999998,
+      "decryptMs": 219.8101250000036,
+      "revealMs": 11920.518125000002,
+      "polls": 0,
+      "totalMs": 23580.220417000004
+    },
+    {
+      "cell": 6,
+      "hit": true,
+      "fireMs": 14486.55741600001,
+      "decryptMs": 216.95212499999616,
+      "revealMs": 9774.896708,
+      "polls": 0,
+      "totalMs": 24478.406249000007
+    },
+    {
+      "cell": 19,
+      "hit": true,
+      "fireMs": 11375.2975,
+      "decryptMs": 1319.8776669999934,
+      "revealMs": 9552.003166999988,
+      "polls": 1,
+      "totalMs": 22247.178333999982
+    },
+    {
+      "cell": 24,
+      "hit": false,
+      "fireMs": 15246.026916000003,
+      "decryptMs": 211.79574999999022,
+      "revealMs": 11265.723457999993,
+      "polls": 0,
+      "totalMs": 26723.546123999986
+    },
+    {
+      "cell": 32,
+      "hit": true,
+      "fireMs": 8788.245417000027,
+      "decryptMs": 209.61920900002588,
+      "revealMs": 24587.912209000002,
+      "polls": 0,
+      "totalMs": 33585.776835000055
+    },
+    {
+      "cell": 40,
+      "hit": true,
+      "fireMs": 10596.971208999981,
+      "decryptMs": 1326.4327500000072,
+      "revealMs": 22225.941749999998,
+      "polls": 1,
+      "totalMs": 34149.34570899999
+    }
+  ]
+}

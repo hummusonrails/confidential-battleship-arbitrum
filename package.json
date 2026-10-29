@@ -1,0 +1,16 @@
+{
+  "name": "cofhe-latency",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "blocktimes": "python3 blocktimes.py",
+    "build": "forge build",
+    "latency": "node latency.mjs"
+  },
+  "dependencies": {
+    "@cofhe/sdk": "^1.0.1",
+    "@fhenixprotocol/cofhe-contracts": "^1.0.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "viem": "^2.57.13"
+  }
+}

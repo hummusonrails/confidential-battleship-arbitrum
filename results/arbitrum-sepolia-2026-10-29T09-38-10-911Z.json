@@ -1,0 +1,114 @@
+{
+  "network": "arbitrum-sepolia",
+  "receipts": "eth_sendRawTransactionSync",
+  "contract": "0x2f789dc6292a500b0a8ca16394b8ecd3bf311a44",
+  "account": "0xBbB721572062a2Bbf3ba4e27ae7b7a029F8F40fC",
+  "rpc": "https://sepolia-rollup.arbitrum.io/rpc",
+  "rpcRoundTripMs": [
+    195.585916,
+    200.55162500000006,
+    205.1388750000001,
+    189.61012500000015,
+    196.51154199999996
+  ],
+  "baselineMs": [
+    411.58433300000024,
+    308.7887499999997,
+    238.29916700000012
+  ],
+  "deployMs": 312.1931249999998,
+  "encryptMs": 5362.776500000001,
+  "setBoardMs": 525.8406670000004,
+  "shots": [
+    {
+      "cell": 30,
+      "hit": true,
+      "fireMs": 427.974083000001,
+      "decryptMs": 1337.6525000000001,
+      "revealMs": 344.0560830000031,
+      "polls": 1,
+      "totalMs": 2109.6826660000042
+    },
+    {
+      "cell": 17,
+      "hit": true,
+      "fireMs": 568.7668749999975,
+      "decryptMs": 107.93391599999813,
+      "revealMs": 280.2873749999999,
+      "polls": 0,
+      "totalMs": 956.9881659999955
+    },
+    {
+      "cell": 55,
+      "hit": true,
+      "fireMs": 472.75779200000034,
+      "decryptMs": 1221.5066250000018,
+      "revealMs": 470.4919169999994,
+      "polls": 1,
+      "totalMs": 2164.7563340000015
+    },
+    {
+      "cell": 47,
+      "hit": true,
+      "fireMs": 464.09904200000165,
+      "decryptMs": 1223.9685839999984,
+      "revealMs": 480.4485829999976,
+      "polls": 1,
+      "totalMs": 2168.5162089999976
+    },
+    {
+      "cell": 23,
+      "hit": true,
+      "fireMs": 427.952959000002,
+      "decryptMs": 1214.5807080000013,
+      "revealMs": 259.6999169999981,
+      "polls": 1,
+      "totalMs": 1902.2335840000014
+    },
+    {
+      "cell": 21,
+      "hit": false,
+      "fireMs": 459.505250000002,
+      "decryptMs": 1227.3386660000033,
+      "revealMs": 272.83766599999944,
+      "polls": 1,
+      "totalMs": 1959.6815820000047
+    },
+    {
+      "cell": 36,
+      "hit": false,
+      "fireMs": 462.174500000001,
+      "decryptMs": 1477.6628340000025,
+      "revealMs": 473.73075000000244,
+      "polls": 1,
+      "totalMs": 2413.568084000006
+    },
+    {
+      "cell": 19,
+      "hit": false,
+      "fireMs": 487.5292499999996,
+      "decryptMs": 1234.9508330000026,
+      "revealMs": 431.0753330000007,
+      "polls": 1,
+      "totalMs": 2153.555416000003
+    },
+    {
+      "cell": 52,
+      "hit": true,
+      "fireMs": 490.0576250000013,
+      "decryptMs": 1224.935749999997,
+      "revealMs": 282.1597079999992,
+      "polls": 1,
+      "totalMs": 1997.1530829999974
+    },
+    {
+      "cell": 37,
+      "hit": true,
+      "fireMs": 455.9260839999988,
+      "decryptMs": 1225.7439999999988,
+      "revealMs": 407.9292080000014,
+      "polls": 1,
+      "totalMs": 2089.599291999999
+    }
+  ]
+}
