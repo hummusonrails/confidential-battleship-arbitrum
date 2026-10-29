@@ -29,7 +29,9 @@ function Cell({ cell, state, onFire, disabled, flipDelay = 0, bounceDelay = null
     if (state === 'queued') { setShown(state); setAnimation('pop'); return; }
     const timer = setTimeout(() => setAnimation('flip-in'), flipDelay);
     return () => clearTimeout(timer);
-  }, [state, flipDelay]);
+    // flipDelay arrives in the same render as the new state; a later change must not cancel a scheduled flip.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   const onAnimationEnd = () => {
     if (animation === 'flip-in') {
@@ -63,20 +65,17 @@ function Cell({ cell, state, onFire, disabled, flipDelay = 0, bounceDelay = null
 export function Board({ cells, onFire, disabled }) {
   const [shakeRow, setShakeRow] = useState(null);
   const sunkBefore = useRef(sunkSectors(cells));
-  const [sinking, setSinking] = useState({});
+  const sinking = useRef({});
 
-  // When a sector sinks, its other hit cells flip in order, then the whole ship bounces.
-  useEffect(() => {
-    const now = sunkSectors(cells);
-    const plan = {};
-    now.forEach((sunk, sector) => {
-      if (!sunk || sunkBefore.current[sector]) return;
-      const ship = cells.map((s, c) => (s === 'sunk' && sectorOf(c) === sector ? c : -1)).filter((c) => c >= 0);
-      ship.forEach((c, i) => { plan[c] = { flipDelay: i * 300, bounceDelay: (ship.length - 1 - i) * 300 + i * 100 }; });
-    });
-    sunkBefore.current = now;
-    if (Object.keys(plan).length) setSinking((prev) => ({ ...prev, ...plan }));
-  }, [cells]);
+  // When a sector sinks, its other hit cells flip in order, then the whole ship bounces. The plan is worked out
+  // during render so each cell gets its delay together with its new state.
+  const now = sunkSectors(cells);
+  now.forEach((sunk, sector) => {
+    if (!sunk || sunkBefore.current[sector]) return;
+    const ship = cells.map((s, c) => (s === 'sunk' && sectorOf(c) === sector ? c : -1)).filter((c) => c >= 0);
+    ship.forEach((c, i) => { sinking.current[c] = { flipDelay: i * 300, bounceDelay: (ship.length - 1 - i) * 300 + i * 100 }; });
+  });
+  useEffect(() => { sunkBefore.current = sunkSectors(cells); }, [cells]);
 
   const fire = useCallback((cell) => {
     if (onFire(cell) === false) {
@@ -94,7 +93,7 @@ export function Board({ cells, onFire, disabled }) {
       const cell = row * 8 + col;
       items.push(
         <Cell key={cell} cell={cell} state={cells[cell]} onFire={fire} disabled={disabled}
-          flipDelay={sinking[cell]?.flipDelay} bounceDelay={sinking[cell]?.bounceDelay ?? null} />,
+          flipDelay={sinking.current[cell]?.flipDelay} bounceDelay={sinking.current[cell]?.bounceDelay ?? null} />,
       );
     }
     rows.push(

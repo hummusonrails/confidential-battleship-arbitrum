@@ -1,3 +1,5 @@
+import { keccak256 } from 'viem';
+
 // Sends transactions and returns their receipts as fast as the chain allows. Shared by the browser game and
 // selfplay.mjs.
 //
@@ -57,12 +59,19 @@ export function createSender({ publicClient, walletClient, onLog = () => {} }) {
       try {
         receipt = await publicClient.sendRawTransactionSync({ serializedTransaction });
       } catch (error) {
-        if (!/method not found|not supported|does not exist|-32601/i.test(String(error.details ?? error.message))) {
-          nonce = undefined;
-          throw error;
+        if (/method not found|not supported|does not exist|-32601/i.test(String(error.details ?? error.message))) {
+          syncSupported = false;
+          onLog('eth_sendRawTransactionSync is not supported here; polling for receipts');
+        } else {
+          // The call can end (a gateway timeout, a dropped connection) after the transaction was accepted, so the
+          // receipt is looked up by hash before the send counts as failed.
+          try {
+            receipt = await publicClient.waitForTransactionReceipt({ hash: keccak256(serializedTransaction), pollingInterval: 250, timeout: 45_000 });
+          } catch {
+            nonce = undefined;
+            throw error;
+          }
         }
-        syncSupported = false;
-        onLog('eth_sendRawTransactionSync is not supported here; polling for receipts');
       }
     }
     if (!receipt) {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createGame, sectorOf, MISS, HIT, SUNK } from './game.js';
+import { cellName, createGame, sectorOf, MISS, HIT, SUNK } from './game.js';
 import { recordGame, recordShot } from './stats.js';
 import { toast } from './toast.jsx';
 
@@ -120,11 +120,27 @@ export function useBattle(networkKey) {
         refreshBalance();
       } catch (error) {
         const message = error.shortMessage ?? error.message;
-        update((prev) => ({ cells: prev.cells.map((s, i) => (i === cell ? null : s)), active: null }));
-        toast(/insufficient funds/i.test(message) ? 'Out of testnet ETH. Top up the burner.' : 'Shot failed. Try again.');
         console.error(`[${networkKey}] shot at ${cell} failed:`, message);
-        queue.current.forEach((c) => update((prev) => ({ cells: prev.cells.map((s, i) => (i === c ? null : s)) })));
-        queue.current = [];
+        let recovered = null;
+        try { recovered = await game.recover(gameId); } catch (recoverError) {
+          console.error(`[${networkKey}] recovery failed:`, recoverError.shortMessage ?? recoverError.message);
+        }
+        if (recovered) {
+          update((prev) => {
+            let cells = prev.cells.map((s, i) => (i === recovered.cell ? NAMES[recovered.result] : s));
+            if (recovered.result === SUNK) cells = sinkSector(cells, sectorOf(recovered.cell));
+            return { cells, shots: prev.shots + 1, active: null, phase: recovered.won ? 'won' : prev.phase };
+          });
+        } else {
+          update((prev) => ({ cells: prev.cells.map((s, i) => (i === cell ? null : s)), active: null }));
+        }
+        if (/insufficient funds/i.test(message)) {
+          toast('Out of testnet ETH. Top up the burner.');
+          queue.current.forEach((c) => update((prev) => ({ cells: prev.cells.map((s, i) => (i === c ? null : s)) })));
+          queue.current = [];
+        } else if (!recovered) {
+          toast(`Shot at ${cellName(cell)} failed. Pick it again.`);
+        }
       }
       update({ queued: queue.current.length });
     }

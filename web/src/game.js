@@ -101,6 +101,18 @@ export function createGame(networkKey) {
       return { ...current, cells: boardFromMasks(current) };
     },
 
+    // Finishes a shot the contract is still waiting to reveal (a step failed after fire landed). Returns that
+    // shot's cell and result, or null when nothing was pending.
+    async recover(gameId) {
+      const game = await readGame(gameId);
+      if (!game.pending) return null;
+      const decrypted = await decryptPublic(await cofheClient(), game.pendingResult);
+      const result = Number(decrypted.decryptedValue);
+      const { receipt } = await send(call('reveal', [gameId, result, decrypted.signature]));
+      const won = parseEventLogs({ abi, logs: receipt.logs, eventName: 'Won' }).length > 0;
+      return { cell: game.pendingCell, result, won };
+    },
+
     async newGame() {
       const { ms, receipt } = await send(call('newGame', []));
       const [event] = parseEventLogs({ abi, logs: receipt.logs, eventName: 'GameStarted' });
