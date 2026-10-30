@@ -65,7 +65,7 @@ Median per stage, October 29, 2026:
 | `fire`: shot included onchain | 0.46 s | 11.41 s |
 | `decrypt`: CoFHE compute and decryption | 1.23 s | 0.22 s |
 | `reveal`: result published onchain | 0.38 s | 11.59 s |
-| Whole shot | **2.10 s** | 25.60 s |
+| Whole shot (three stages summed) | **2.10 s** | 25.60 s |
 
 On Ethereum, CoFHE finishes while the next 12 s block is still on its way, so `decrypt` returns at once. On Arbitrum the chain adds under a second per shot, which leaves CoFHE's own computation as the largest stage.
 
@@ -73,7 +73,7 @@ On Ethereum, CoFHE finishes while the next 12 s block is still on its way, so `d
 |:------------------------------|:-------|
 | Shots to sink the fleet | 53, every answer checked |
 | Median shot | 1.99 s |
-| Whole game | 107 s |
+| All shots, stages summed | 107 s |
 | `newGame` (four encrypted random ships) | 2.73M gas, 0.53 s |
 
 | Network | Average block time (from block timestamps) |

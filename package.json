@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "blocktimes": "python3 blocktimes.py",
-    "build": "forge build && jq '.abi' out/Battleship.sol/Battleship.json > web/src/battleship-abi.json",
+    "build": "forge build && node -e \"const fs = require('fs'); fs.writeFileSync('web/src/battleship-abi.json', JSON.stringify(JSON.parse(fs.readFileSync('out/Battleship.sol/Battleship.json')).abi, null, 2) + '\\n')\"",
     "dev": "vite",
     "build:web": "vite build",
     "preview": "vite preview",

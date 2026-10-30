@@ -6,6 +6,7 @@ import {FHE, ebool, euint64, externalEuint64} from "@fhenixprotocol/cofhe-contra
 /// One Battleship shot, end to end: an encrypted 64-cell board, a public shot at one cell, hit or miss computed under
 /// FHE, and the answer published onchain with the decrypt signature.
 contract ShotLatency {
+    address public immutable owner = msg.sender;
     euint64 private board;
     ebool[] public shots;
 
@@ -13,8 +14,10 @@ contract ShotLatency {
     event Shot(uint256 indexed id, uint8 cell, ebool hit);
     event Revealed(uint256 indexed id, bool hit);
 
-    /// Bit i of the board is 1 when a ship covers cell i. Nobody, this contract included, can read it.
+    /// Bit i of the board is 1 when a ship covers cell i. Nobody, this contract included, can read it. Only the
+    /// deployer sets it, so the benchmark always checks answers against its own board.
     function setBoard(externalEuint64 encryptedBoard, bytes calldata proof) external {
+        require(msg.sender == owner, "only owner");
         board = FHE.asEuint64(encryptedBoard, proof);
         FHE.allowThis(board);
         emit BoardSet();

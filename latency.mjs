@@ -154,6 +154,7 @@ async function main() {
     const cell = Math.floor(Math.random() * 64);
     const expected = ((board >> BigInt(cell)) & 1n) === 1n;
 
+    const shotStart = now();
     const fired = await sendAndWait(call('fire', [cell]));
     const [event] = parseEventLogs({ abi, logs: fired.receipt.logs, eventName: 'Shot' });
     const { id, hit: handle } = event.args;
@@ -168,11 +169,12 @@ async function main() {
 
     const revealed = await sendAndWait(call('reveal', [id, hit, result.signature]));
 
+    // totalMs sums the three measured stages; wallMs also counts preparing and signing both transactions.
     const shot = { cell, hit, fireMs: fired.ms, decryptMs, revealMs: revealed.ms, polls,
-      totalMs: fired.ms + decryptMs + revealed.ms };
+      totalMs: fired.ms + decryptMs + revealed.ms, wallMs: now() - shotStart };
     shots.push(shot);
     log(`shot ${i + 1} at cell ${cell}: ${hit ? 'HIT' : 'miss'} | fire ${secs(shot.fireMs)} s, ` +
-        `decrypt ${secs(decryptMs)} s (${polls} polls), reveal ${secs(revealed.ms)} s, total ${secs(shot.totalMs)} s`);
+        `decrypt ${secs(decryptMs)} s (${polls} polls), reveal ${secs(revealed.ms)} s, stages ${secs(shot.totalMs)} s, wall clock ${secs(shot.wallMs)} s`);
    } catch (error) {
     if (/CoFHE said/.test(error.message) || !shots.length) throw error;
     stoppedEarly = `stopped after ${shots.length} shots: ${error.shortMessage ?? error.message}`;
@@ -195,7 +197,8 @@ async function main() {
   console.log(row('fire', shots.map((s) => s.fireMs)));
   console.log(row('decrypt', shots.map((s) => s.decryptMs)));
   console.log(row('reveal', shots.map((s) => s.revealMs)));
-  console.log(row('shot total', shots.map((s) => s.totalMs)));
+  console.log(row('stages summed', shots.map((s) => s.totalMs)));
+  console.log(row('shot wall clock', shots.map((s) => s.wallMs)));
 
   mkdirSync(new URL('./results/', import.meta.url), { recursive: true });
   const file = new URL(`./results/${name}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`, import.meta.url);
