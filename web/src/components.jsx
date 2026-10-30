@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { burnerKey, cellName, sectorOf, SHIP_LENGTHS, TOP_UP, topUp } from './game.js';
+import { burnerKey, burnerPersisted, cellName, sectorOf, SHIP_LENGTHS, TOP_UP, topUp } from './game.js';
 import { NETWORKS } from './networks.js';
 import { sunkSectors } from './battle.js';
 import { BUCKETS, bucketOf, loadStats, median } from './stats.js';
@@ -197,7 +197,18 @@ export function Modal({ title, onClose, children, label }) {
   useEffect(() => {
     const previous = document.activeElement;
     ref.current?.focus();
-    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    // Escape closes; Tab and Shift+Tab cycle through the dialog's own controls and never reach the page behind it.
+    const onKey = (e) => {
+      if (e.key === 'Escape') close();
+      if (e.key !== 'Tab' || !ref.current) return;
+      const focusable = [...ref.current.querySelectorAll('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!ref.current.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('keydown', onKey); previous?.focus?.(); };
   }, [close]);
@@ -407,6 +418,12 @@ export function WalletModal({ address, balances, onClose, onFunded }) {
       <p className="modal__subheading">A burner key in this browser signs every shot, so play never stops for a popup.</p>
       <div className="address"><span style={{ flex: 1 }}>{address}</span><button type="button" aria-label="Copy address" onClick={copy}><CopyIcon /></button></div>
       <p className="footnote">Keep only testnet ETH here. A shot costs a fraction of a cent of testnet gas.</p>
+      {!burnerPersisted() && (
+        <p className="footnote wallet-warning" role="alert">
+          This browser is not saving site data, so the key lasts only until this tab closes. Export it below before you
+          fund it, or allow site data and reload.
+        </p>
+      )}
       {Object.entries(NETWORKS).map(([key, net]) => (
         <div className="wallet-net" key={key}>
           <div className="wallet-net__row">
