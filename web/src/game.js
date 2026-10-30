@@ -31,16 +31,26 @@ export function boardFromMasks({ shotMask, hitMask, sunkMask }) {
 
 const BURNER_KEY = 'battleship-burner-key';
 
-// One burner key for every chain, kept in this browser. It only ever holds a few cents of testnet ETH.
+// One burner key for every chain, kept in this browser. It only ever holds a few cents of testnet ETH. The key is read
+// once and kept in memory, so every caller signs and funds the same address even when storage is unavailable.
+let burner;
+let burnerStored = false;
 export function burnerKey() {
-  let key;
-  try { key = localStorage.getItem(BURNER_KEY); } catch {}
-  if (!key) {
-    key = generatePrivateKey();
-    try { localStorage.setItem(BURNER_KEY, key); } catch {}
+  if (burner) return burner;
+  try { burner = localStorage.getItem(BURNER_KEY); } catch {}
+  if (/^0x[0-9a-fA-F]{64}$/.test(burner ?? '')) {
+    burnerStored = true;
+    return burner;
   }
-  return key;
+  burner = generatePrivateKey();
+  try {
+    localStorage.setItem(BURNER_KEY, burner);
+    burnerStored = localStorage.getItem(BURNER_KEY) === burner;
+  } catch {}
+  return burner;
 }
+// False when this browser would not store the key: it lasts only until the tab closes.
+export const burnerPersisted = () => (burnerKey(), burnerStored);
 
 export function createGame(networkKey) {
   const net = NETWORKS[networkKey];
@@ -86,31 +96,31 @@ export function createGame(networkKey) {
       return formatEther(await publicClient.getBalance({ address: account.address }));
     },
 
-    // The player's latest game, or null. A shot left waiting for its reveal (the tab closed mid-shot) is finished.
+    // The player's latest game, or null when there is none or it is won. A shot left waiting for its reveal (the tab
+    // closed mid-shot) is finished first.
     async resume() {
       const latest = await publicClient.readContract({ address: contract, abi, functionName: 'latestGame', args: [account.address] });
       if (latest === 0n) return null;
-      const game = await readGame(latest - 1n);
-      if (game.sunkMask === 15) return null;
-      if (game.pending) {
-        const decrypted = await decryptPublic(await cofheClient(), game.pendingResult);
-        await send(call('reveal', [game.gameId, Number(decrypted.decryptedValue), decrypted.signature]));
-      }
-      const current = game.pending ? await readGame(game.gameId) : game;
-      warm(game.gameId).catch(() => {});
-      return { ...current, cells: boardFromMasks(current) };
+      const current = await this.sync(latest - 1n);
+      if (current.won) return null;
+      warm(current.gameId).catch(() => {});
+      return current;
     },
 
-    // Finishes a shot the contract is still waiting to reveal (a step failed after fire landed). Returns that
-    // shot's cell and result, or null when nothing was pending.
-    async recover(gameId) {
-      const game = await readGame(gameId);
-      if (!game.pending) return null;
-      const decrypted = await decryptPublic(await cofheClient(), game.pendingResult);
-      const result = Number(decrypted.decryptedValue);
-      const { receipt } = await send(call('reveal', [gameId, result, decrypted.signature]));
-      const won = parseEventLogs({ abi, logs: receipt.logs, eventName: 'Won' }).length > 0;
-      return { cell: game.pendingCell, result, won };
+    // The game as the contract records it, after finishing any shot still waiting for its reveal (a step failed after
+    // fire landed). Anyone may publish a reveal, so one that fails because it is already published is fine.
+    async sync(gameId) {
+      let game = await readGame(gameId);
+      if (game.pending) {
+        try {
+          const decrypted = await decryptPublic(await cofheClient(), game.pendingResult);
+          await send(call('reveal', [gameId, Number(decrypted.decryptedValue), decrypted.signature]));
+        } catch (error) {
+          if ((await readGame(gameId)).pending) throw error;
+        }
+        game = await readGame(gameId);
+      }
+      return { ...game, cells: boardFromMasks(game), won: game.sunkMask === 15 };
     },
 
     async newGame() {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { engine } from './battle.js';
+import { engine, FUNDED_EVENT } from './battle.js';
 import { HelpModal, InfoModal, SettingsModal, StatsModal, WalletModal } from './components.jsx';
 import { burnerKey, LOW_BALANCE } from './game.js';
 import { GitHubIcon, HelpIcon, InfoIcon, SettingsIcon, SmallBoardIcon, StatsIcon } from './icons.jsx';
@@ -116,7 +116,8 @@ export default function App() {
           onPlayAgain={modal.onPlayAgain && (() => { close(); modal.onPlayAgain(); })} />
       )}
       {modal?.type === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={close} />}
-      {modal?.type === 'wallet' && <WalletModal address={address} balances={balances} onClose={close} onFunded={refreshBalances} />}
+      {modal?.type === 'wallet' && <WalletModal address={address} balances={balances} onClose={close}
+          onFunded={() => { refreshBalances(); window.dispatchEvent(new Event(FUNDED_EVENT)); }} />}
     </div>
   );
 }

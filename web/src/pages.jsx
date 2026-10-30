@@ -102,22 +102,32 @@ export function PlayPage({ networkKey, onHelp, onWallet, onStats, registerBalanc
 
   useEffect(() => { registerBalance(networkKey, battle.balance); }, [battle.balance, networkKey, registerBalance]);
 
-  const wonShown = useRef(false);
+  // The win toast, then the stats after the last cell's animation. Leaving the page cancels the stats.
+  const latest = useRef(battle);
+  latest.current = battle;
   useEffect(() => {
-    if (battle.phase === 'won' && !wonShown.current) {
-      wonShown.current = true;
-      toast(`Fleet sunk in ${battle.shots} shots`, { win: true });
-      setTimeout(() => onStats(networkKey, () => { wonShown.current = false; battle.start({ fresh: true }); }), 2200);
-    }
-  }, [battle.phase, battle.shots, networkKey, onStats, battle]);
+    if (battle.phase !== 'won') return;
+    toast(`Fleet sunk in ${latest.current.shots} shots`, { win: true });
+    const timer = setTimeout(() => onStats(networkKey, () => latest.current.start({ fresh: true })), 2200);
+    return () => clearTimeout(timer);
+  }, [battle.phase, networkKey, onStats]);
 
+  // One start at a time, held from the balance check on, so repeated clicks never start two games.
+  const starting = useRef(false);
   const play = async (fresh = false) => {
-    if (battle.balance !== null && battle.balance < LOW_BALANCE) {
-      toast('Fund the burner to play');
-      onWallet();
-      return;
+    if (starting.current) return;
+    starting.current = true;
+    try {
+      // A low balance is read again first, so a top up from anywhere counts.
+      if (battle.balance !== null && battle.balance < LOW_BALANCE && (await battle.refreshBalance()) < LOW_BALANCE) {
+        toast('Fund the burner to play');
+        onWallet();
+        return;
+      }
+      if (await battle.start({ fresh })) setView('game');
+    } finally {
+      starting.current = false;
     }
-    if (await battle.start({ fresh })) setView('game');
   };
 
   if (view === 'splash' || battle.phase === 'loading' || battle.phase === 'starting') {
@@ -169,15 +179,16 @@ export function PlayPage({ networkKey, onHelp, onWallet, onStats, registerBalanc
 const RACE = ['arbitrum-sepolia', 'ethereum-sepolia'];
 
 function RaceColumn({ battle, startedAt }) {
-  const [, tick] = useState(0);
-  useEffect(() => {
-    if (!startedAt) return;
-    const timer = setInterval(() => tick((n) => n + 1), 100);
-    return () => clearInterval(timer);
-  }, [startedAt]);
   const done = battle.phase === 'won';
   // The clock runs while this chain has shots in flight and stops when its last one lands.
   const busy = battle.active !== null || battle.queued > 0;
+  const running = Boolean(startedAt) && busy && !done;
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => tick((n) => n + 1), 100);
+    return () => clearInterval(timer);
+  }, [running]);
   const idleSince = useRef(null);
   if (busy) idleSince.current = null;
   else if (idleSince.current === null && battle.last) idleSince.current = performance.now();
@@ -198,6 +209,7 @@ function RaceColumn({ battle, startedAt }) {
       <Fleet cells={battle.cells} />
       <Board cells={battle.cells} onFire={battle.fire} disabled={battle.phase !== 'playing'} />
       <Stopwatch active={battle.active} last={battle.last} idleLabel={battle.phase === 'starting' ? 'Placing the fleet' : 'Waiting for a shot'} />
+      {battle.error && battle.phase === 'splash' && <p className="race-col__error" role="alert">{battle.error.slice(0, 140)}</p>}
     </section>
   );
 }
@@ -213,18 +225,32 @@ export function RacePage({ onWallet, registerBalance }) {
   useEffect(() => { registerBalance(RACE[1], eth.balance); }, [eth.balance, registerBalance]);
 
   const ready = arb.phase !== 'loading' && eth.phase !== 'loading';
-  const racing = arb.phase === 'playing' || eth.phase === 'playing' || arb.phase === 'won' || eth.phase === 'won';
+  const inPlay = (b) => b.phase === 'playing' || b.phase === 'won';
+  const racing = battles.some(inPlay);
+  // One chain started and the other did not: the retry starts only the one that is missing.
+  const partial = racing && !battles.every(inPlay);
 
+  // Held from the balance check on, so repeated clicks never start extra games.
+  const lock = useRef(false);
   const start = async () => {
-    if (battles.some((b) => b.balance !== null && b.balance < LOW_BALANCE)) {
-      toast('Fund the burner on both chains to race');
-      onWallet();
-      return;
-    }
+    if (lock.current) return;
+    lock.current = true;
     setStarting(true);
-    const ok = await Promise.all(battles.map((b) => b.start({ fresh: true })));
-    setStarting(false);
-    if (ok.every(Boolean)) setStartedAt(null);
+    try {
+      const targets = partial ? battles.filter((b) => !inPlay(b)) : battles;
+      const balances = await Promise.all(targets.map((b) => (b.balance !== null && b.balance < LOW_BALANCE ? b.refreshBalance() : b.balance)));
+      if (balances.some((balance) => balance !== null && balance < LOW_BALANCE)) {
+        toast('Fund the burner on both chains to race');
+        onWallet();
+        return;
+      }
+      const ok = await Promise.all(targets.map((b) => b.start({ fresh: true })));
+      // A retry of one chain keeps the clock of the race already running on the other.
+      if (ok.every(Boolean)) { if (!partial) setStartedAt(null); } else toast('A chain could not place its fleet. Try again.');
+    } finally {
+      lock.current = false;
+      setStarting(false);
+    }
   };
 
   // One click fires the same cell on both chains. The clock starts with the first shot.
@@ -235,23 +261,21 @@ export function RacePage({ onWallet, registerBalance }) {
   };
 
   const wired = battles.map((b) => ({ ...b, fire: fireBoth }));
-  const arbWonToast = useRef(false);
+  const arbShots = useRef(arb.shots);
+  arbShots.current = arb.shots;
   useEffect(() => {
-    if (arb.phase === 'won' && !arbWonToast.current) {
-      arbWonToast.current = true;
-      toast(`Arbitrum Sepolia sank the fleet in ${arb.shots} shots`, { win: true });
-    }
-  }, [arb.phase, arb.shots]);
+    if (arb.phase === 'won') toast(`Arbitrum Sepolia sank the fleet in ${arbShots.current} shots`, { win: true });
+  }, [arb.phase]);
 
   return (
     <main className="race">
       <div className="race__intro">
         <h1 className="race__title">Race the Chains</h1>
         <p className="race__sub">Every cell you pick is fired on both chains. Each has its own hidden fleet, so the answers differ; the clocks are the point.</p>
-        {(!racing || arb.phase === 'won') && (
+        {(!racing || partial || arb.phase === 'won') && (
           <div style={{ marginTop: 16 }}>
             <button className="btn btn--primary" type="button" disabled={!ready || starting} onClick={start}>
-              {starting ? 'Placing fleets…' : racing ? 'Race again' : 'Start the race'}
+              {starting ? 'Placing fleets…' : partial ? 'Retry the start' : racing ? 'Race again' : 'Start the race'}
             </button>
           </div>
         )}

@@ -52,31 +52,38 @@ export function createSender({ publicClient, walletClient, onLog = () => {} }) {
     nonce ??= await publicClient.getTransactionCount({ address: account.address, blockTag: 'pending' });
     const { key, prepared } = await prepare(request);
     nonce += 1;
-    const serializedTransaction = await walletClient.signTransaction(prepared);
-    const start = performance.now();
     let receipt;
-    if (syncSupported) {
-      try {
-        receipt = await publicClient.sendRawTransactionSync({ serializedTransaction });
-      } catch (error) {
-        if (/method not found|not supported|does not exist|-32601/i.test(String(error.details ?? error.message))) {
-          syncSupported = false;
-          onLog('eth_sendRawTransactionSync is not supported here; polling for receipts');
-        } else {
-          // The call can end (a gateway timeout, a dropped connection) after the transaction was accepted, so the
-          // receipt is looked up by hash before the send counts as failed.
-          try {
-            receipt = await publicClient.waitForTransactionReceipt({ hash: keccak256(serializedTransaction), pollingInterval: 250, timeout: 45_000 });
-          } catch {
-            nonce = undefined;
-            throw error;
+    let start;
+    try {
+      const serializedTransaction = await walletClient.signTransaction(prepared);
+      start = performance.now();
+      if (syncSupported) {
+        try {
+          receipt = await publicClient.sendRawTransactionSync({ serializedTransaction });
+        } catch (error) {
+          if (/method not found|not supported|does not exist|-32601/i.test(String(error.details ?? error.message))) {
+            syncSupported = false;
+            onLog('eth_sendRawTransactionSync is not supported here; polling for receipts');
+          } else {
+            // The call can end (a gateway timeout, a dropped connection) after the transaction was accepted, so the
+            // receipt is looked up by hash before the send counts as failed.
+            try {
+              receipt = await publicClient.waitForTransactionReceipt({ hash: keccak256(serializedTransaction), pollingInterval: 250, timeout: 45_000 });
+            } catch {
+              throw error;
+            }
           }
         }
       }
-    }
-    if (!receipt) {
-      const hash = await publicClient.sendRawTransaction({ serializedTransaction });
-      receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 100, timeout: 180_000 });
+      if (!receipt) {
+        const hash = await publicClient.sendRawTransaction({ serializedTransaction });
+        receipt = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: 100, timeout: 180_000 });
+      }
+    } catch (error) {
+      // Rejected or unconfirmed: the node's pending count decides the next nonce, so a rejected transaction leaves no
+      // gap and an accepted one is not reused.
+      nonce = undefined;
+      throw error;
     }
     if (receipt.status !== 'success') {
       if (key) gasByFunction.delete(key);
