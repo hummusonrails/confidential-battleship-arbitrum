@@ -14,7 +14,11 @@ function useRoute() {
   const read = () => window.location.hash.replace(/^#/, '') || '/';
   const [route, setRoute] = useState(read);
   useEffect(() => {
-    const onHash = () => { setRoute(read()); window.scrollTo(0, 0); };
+    const onHash = () => {
+      setRoute(read());
+      window.scrollTo(0, 0);
+      window.goatcounter?.count?.({ path: window.location.pathname + window.location.hash });
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
